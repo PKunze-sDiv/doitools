@@ -6,7 +6,7 @@
 
 
 
-argument_validity_check <- function(doi_vec, api_key = NULL, wait_for = 1) {
+argument_validity_check <- function(doi_vec, api_key = NULL, wait_for = 1L) {
 
     if (!is.character(doi_vec)) stop("Argument doi_vec must be a character vector.")
     if (length(doi_vec) == 0)   stop("Argument doi_vec must not be of length 0.")
@@ -48,14 +48,15 @@ altmetric_status_code_description <- function(status_code) {
   if (length(status_code) > 1)  warning("Length of argument status_code greater than 1. Only first element used.")
 
   switch(
-    as.character(status_code[1]),
-    "401" = "Invalid API key used.",
-    "403" = stringr::str_c("You aren't authorized for this call. Some calls and query types can only be ",
-                  "made by holders of an API key and/or a license for the full access version of the API."),
-    "404" = "Altmetric doesn't have any details for the DOI you provided.",
-    "429" = "Maximum number of calls exceeded. You are being rate limited.",
-    "502" = "The Altmetric Details Page API version you are using is currently down for maintenance.",
-    "Unkown status code"
+      as.character(status_code[1]),
+      "0" = "DOI was NA. Never called API.",
+      "401" = "Invalid API key used.",
+      "403" = stringr::str_c("You aren't authorized for this call. Some calls and query types can only be ",
+                    "made by holders of an API key and/or a license for the full access version of the API."),
+      "404" = "Altmetric doesn't have any details for the DOI you provided.",
+      "429" = "Maximum number of calls exceeded. You are being rate limited.",
+      "502" = "The Altmetric Details Page API version you are using is currently down for maintenance.",
+      "Unkown status code"
   )
 
 }
@@ -140,7 +141,7 @@ altmetric_response_to_tibble <- function(alt_list) {
 #' # mean Altmetric score of all DOIs
 #' mean(result$metrics$score, na.rm = TRUE)
 #' @export
-doi_get_altmetrics <- function(doi_vec, api_key = NULL, wait_for = 1) {
+doi_get_altmetrics <- function(doi_vec, api_key = NULL, wait_for = 1L) {
 
     # check validity of function arguments
     argument_validity_check(doi_vec, api_key, wait_for)
@@ -157,10 +158,10 @@ doi_get_altmetrics <- function(doi_vec, api_key = NULL, wait_for = 1) {
         result[[i]] <- doi_get_altmetrics_single(doi_vec[i], api_key[1])
 
         # is a rate limit reached?
-        if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429) {
+        if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429L) {
 
             # is the daily or hourly limit reached? Warn accordingly
-            if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0) {
+            if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0L) {
                 warning("Daily rate limit reached. ", appendLF = FALSE)
             } else {
                 warning("Hourly rate limit reached. ", appendLF = FALSE)
@@ -211,6 +212,16 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
 
     # check validity of function arguments
     argument_validity_check(doi_vec, api_key)
+    if (is.na(doi_vec[1])) {
+        warning("NA in argument doi_vec. This results in a row of NAs. Better filter NAs bevor calling doi_get_altmetrics.")
+        metrics  <- tibble::tibble(doi = doi_vec[1])
+        api_info <- tibble::tibble(api_response_msg          = altmetric_status_code_description(0L),
+                                   api_response_code         = 0L,
+                                   remaining_calls_this_hour = NA,
+                                   remaining_calls_today     = NA
+                    )
+        return(list(metrics = metrics, api_info = api_info))
+    }
 
     # create API call url and perform the request
     ApiUrl   <- "https://api.altmetric.com/v1/doi/"
@@ -218,7 +229,7 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
     response <- httr::GET(url)
 
     # is the response a success or not? build metrics tibble and api_info tibble accordingly
-    if (response$status_code == 200) {
+    if (response$status_code == 200L) {
         metrics  <- httr::content(response)
         metrics  <- altmetric_response_to_tibble(metrics)
         metrics  <- dplyr::rename(metrics, altmetric_doi = .data$doi)
@@ -233,16 +244,13 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
     # attach further info to api_tibble (response status code and remainig calls)
     api_info <- dplyr::mutate(
                     api_info,
-                    #api_response_code         = response$status_code,
-                    #remaining_calls_this_hour = response$headers$`x-hourlyratelimit-remaining`,
-                    #remaining_calls_today     = response$headers$`x-dailyratelimit-remaining`
-                    api_response_code         = 429,
-                    remaining_calls_this_hour = 0,
-                    remaining_calls_today     = 0
+                    api_response_code         = response$status_code,
+                    remaining_calls_this_hour = response$headers$`x-hourlyratelimit-remaining`,
+                    remaining_calls_today     = response$headers$`x-dailyratelimit-remaining`
     )
 
     # return result
-    list(metrics = metrics, api_info = api_info)
+    return(list(metrics = metrics, api_info = api_info))
 
 }
 
@@ -276,7 +284,7 @@ doi_get_altmetrics_background <- function(doi_vec, api_key = NULL) {
         result[[i]] <- doi_get_altmetrics_single(doi_vec[i], api_key[1])
 
         # is a rate limit reached?
-        if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429) {
+        if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429L) {
 
             message("API rate limit reached. ", appendLF = FALSE)
 
@@ -294,13 +302,12 @@ doi_get_altmetrics_background <- function(doi_vec, api_key = NULL) {
             }
 
             # is the daily or hourly limit reached? Wait accordingly
-            if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0) {
-                message("Waiting a day to proceed. Continue download at ", Sys.time() + 60*60*24, "...")
-                #Sys.sleep(60*60*24)
-                Sys.sleep(8)
+            if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0L) {
+                message("Waiting a day to proceed. Continue download at ", Sys.time() + 60L*60L*24L, "...")
+                Sys.sleep(60L*60L*24L)
             } else {
-                message("Waiting an hour to proceed. Continue download at ", Sys.time() + 60*60, "...")
-                Sys.sleep(60*60)
+                message("Waiting an hour to proceed. Continue download at ", Sys.time() + 60L*60L, "...")
+                Sys.sleep(60L*60L)
             }
 
             # attempt to restore intermediate result from file
@@ -319,12 +326,12 @@ doi_get_altmetrics_background <- function(doi_vec, api_key = NULL) {
             }
 
             # decrementing iterator in order to repeat the last query that failed due to the rate limit
-            i <- i - 1
+            i <- i - 1L
 
         }
 
         # wait one second between each call
-        Sys.sleep(1)
+        Sys.sleep(1L)
 
     }
 

@@ -26,15 +26,15 @@ pkg.env$doi_regex <- "10\\.\\d{4,9}/[-._;()/:a-z0-9A-Z]+"
 #' @export
 doi_set_regex <- function(rg_expr = "10\\.\\d{4,9}/[-._;()/:a-z0-9A-Z]+") {
 
-  if (!is.character(rg_expr)) stop("Argument rg_expr must be of type character.")
-  if (length(rg_expr) == 0)   stop("Argument rg_expr must not be of length 0.")
-  if (length(rg_expr) > 1)    warning("Length of argument rg_expr greater than 1. Only first element used.")
-  if (is.na(rg_expr[1])) {
-      warning("Attempt to assing NA as regular expression rejected. Regular expression to find DOIs unchanged.")
-      invisible(NULL)
-  }
-  pkg.env$doi_regex <- rg_expr[1]
-  invisible(rg_expr[1])
+    if (!is.character(rg_expr)) stop("Argument rg_expr must be of type character.")
+    if (length(rg_expr) == 0)   stop("Argument rg_expr must not be of length 0.")
+    if (length(rg_expr) > 1)    warning("Length of argument rg_expr greater than 1. Only first element used.")
+    if (is.na(rg_expr[1])) {
+        warning("Attempt to assing NA as regular expression rejected. Regular expression to find DOIs unchanged.")
+        invisible(NULL)
+    }
+    pkg.env$doi_regex <- rg_expr[1]
+    invisible(rg_expr[1])
 
 }
 
@@ -51,9 +51,9 @@ doi_set_regex <- function(rg_expr = "10\\.\\d{4,9}/[-._;()/:a-z0-9A-Z]+") {
 #' @export
 doi_to_url <- function(doi_vec) {
 
-  if (!is.character(doi_vec)) stop("Argument doi_vec must be of type character.")
-  if (length(doi_vec) == 0)   return(character(0))
-  stringr::str_c("https://www.doi.org/", doi_vec)
+    if (!is.character(doi_vec)) stop("Argument doi_vec must be of type character.")
+    if (length(doi_vec) == 0)   return(character(0))
+    stringr::str_c("https://www.doi.org/", doi_vec)
 
 }
 
@@ -72,14 +72,14 @@ doi_to_url <- function(doi_vec) {
 #' @export
 doi_detect <- function(doi_vec, na_yields_false = FALSE) {
 
-  if (!is.character(doi_vec))       stop("Argument doi_vec must be a character vector.")
-  if (!is.logical(na_yields_false)) stop("Argument na_yields_false must be of type logical.")
-  if (length(na_yields_false) == 0) stop("Argument na_yields_false must not be of length 0.")
-  if (length(na_yields_false) > 1)  warning("Length of argument na_yields_false greater than 1. Only first element used.")
-  doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
+    if (!is.character(doi_vec))       stop("Argument doi_vec must be a character vector.")
+    if (!is.logical(na_yields_false)) stop("Argument na_yields_false must be of type logical.")
+    if (length(na_yields_false) == 0) stop("Argument na_yields_false must not be of length 0.")
+    if (length(na_yields_false) > 1)  warning("Length of argument na_yields_false greater than 1. Only first element used.")
+    doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
 
-  a   <- stringr::str_detect(doi_vec, pkg.env$doi_regex)
-  if (na_yields_false[1]) tidyr::replace_na(a, replace = FALSE) else a
+    a   <- stringr::str_detect(doi_vec, pkg.env$doi_regex)
+    if (na_yields_false[1]) tidyr::replace_na(a, replace = FALSE) else a
 
 }
 
@@ -98,15 +98,15 @@ doi_detect <- function(doi_vec, na_yields_false = FALSE) {
 #' @export
 doi_check <- function(doi_vec, na_yields_false = FALSE) {
 
-  if (!is.character(doi_vec))       stop("Argument doi_vec must be a character vector.")
-  if (!is.logical(na_yields_false)) stop("Argument na_yields_false must be of type logical.")
-  if (length(na_yields_false) == 0) stop("Argument na_yields_false must not be of length 0.")
-  if (length(na_yields_false) > 1)  warning("Length of argument na_yields_false greater than 1. Only first element used.")
-  doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
+    if (!is.character(doi_vec))       stop("Argument doi_vec must be a character vector.")
+    if (!is.logical(na_yields_false)) stop("Argument na_yields_false must be of type logical.")
+    if (length(na_yields_false) == 0) stop("Argument na_yields_false must not be of length 0.")
+    if (length(na_yields_false) > 1)  warning("Length of argument na_yields_false greater than 1. Only first element used.")
+    doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
 
-  rgx <- stringr::str_c("^", pkg.env$doi_regex, "$")
-  a   <- stringr::str_detect(doi_vec, rgx)
-  if (na_yields_false[1]) tidyr::replace_na(a, replace = FALSE) else a
+    rgx <- stringr::str_c("^", pkg.env$doi_regex, "$")
+    a   <- stringr::str_detect(doi_vec, rgx)
+    if (na_yields_false[1]) tidyr::replace_na(a, replace = FALSE) else a
 
 }
 
@@ -126,14 +126,14 @@ doi_check <- function(doi_vec, na_yields_false = FALSE) {
 #' @export
 doi_extract_first <- function(doi_vec, lower_case = FALSE) {
 
-  if (!is.character(doi_vec))  stop("Argument doi_vec must be a character vector.")
-  if (!is.logical(lower_case)) stop("Argument lower_case must be of type logical.")
-  if (length(lower_case) == 0) stop("Argument lower_case must not be of length 0.")
-  if (length(lower_case) > 1)  warning("Length of argument lower_case greater than 1. Only first element used.")
-  doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
+    if (!is.character(doi_vec))  stop("Argument doi_vec must be a character vector.")
+    if (!is.logical(lower_case)) stop("Argument lower_case must be of type logical.")
+    if (length(lower_case) == 0) stop("Argument lower_case must not be of length 0.")
+    if (length(lower_case) > 1)  warning("Length of argument lower_case greater than 1. Only first element used.")
+    doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
 
-  a <- stringr::str_extract(doi_vec, pkg.env$doi_regex)
-  if (lower_case[1]) tolower(a) else a
+    a <- stringr::str_extract(doi_vec, pkg.env$doi_regex)
+    if (lower_case[1]) tolower(a) else a
 
 }
 
@@ -157,18 +157,18 @@ doi_extract_first <- function(doi_vec, lower_case = FALSE) {
 #' @export
 doi_extract_all <- function(doi_vec, lower_case = FALSE, simplify = FALSE) {
 
-  if (!is.character(doi_vec))  stop("Argument doi_vec must be a character vector.")
-  if (!is.logical(lower_case)) stop("Argument lower_case must be of type logical.")
-  if (length(lower_case) == 0) stop("Argument lower_case must not be of length 0.")
-  if (length(lower_case) > 1)  warning("Length of argument lower_case greater than 1. Only first element used.")
-  if (!is.logical(simplify))    stop("Argument simplify must be of type logical.")
-  if (length(simplify) == 0)    stop("Argument simplify must not be of length 0.")
-  if (length(simplify) > 1)     warning("Length of argument simplify greater than 1. Only first element used.")
-  doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
+    if (!is.character(doi_vec))  stop("Argument doi_vec must be a character vector.")
+    if (!is.logical(lower_case)) stop("Argument lower_case must be of type logical.")
+    if (length(lower_case) == 0) stop("Argument lower_case must not be of length 0.")
+    if (length(lower_case) > 1)  warning("Length of argument lower_case greater than 1. Only first element used.")
+    if (!is.logical(simplify))    stop("Argument simplify must be of type logical.")
+    if (length(simplify) == 0)    stop("Argument simplify must not be of length 0.")
+    if (length(simplify) > 1)     warning("Length of argument simplify greater than 1. Only first element used.")
+    doi_vec <- tidyr::replace_na(doi_vec, NA_character_)
 
-  a <- stringr::str_extract_all(doi_vec, pkg.env$doi_regex)
-  if (lower_case[1]) a <- purrr::map(a, ~ tolower(.x))
-  if (simplify[1]) unique(purrr::flatten_chr(a)) else a
+    a <- stringr::str_extract_all(doi_vec, pkg.env$doi_regex)
+    if (lower_case[1]) a <- purrr::map(a, ~ tolower(.x))
+    if (simplify[1]) unique(purrr::flatten_chr(a)) else a
 
 }
 
