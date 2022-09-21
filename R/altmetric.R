@@ -278,55 +278,58 @@ doi_get_altmetrics_background <- function(doi_vec, api_key = NULL) {
     # loop over DOIs
     for (i in seq_along(doi_vec)) {
 
-        message("Trying DOI ", i, "/", length(doi_vec), " [ ", doi_vec[i], " ] ...")
+        repeat {
 
-        # read metrics from API
-        result[[i]] <- doi_get_altmetrics_single(doi_vec[i], api_key[1])
+            message("Trying DOI ", i, "/", length(doi_vec), " [ ", doi_vec[i], " ] ...")
 
-        # is a rate limit reached?
-        if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429L) {
+            # read metrics from API
+            result[[i]] <- doi_get_altmetrics_single(doi_vec[i], api_key[1])
 
-            message("API rate limit reached. ", appendLF = FALSE)
+            # is a rate limit reached?
+            if ((dplyr::pull(result[[i]]$api_info, .data$api_response_code))[1] == 429L) {
 
-            # attempt to save intermediate result to file
-            if (backup_working) {
+                message("API rate limit reached. ", appendLF = FALSE)
 
-                message("Saving intermediate result to ", backup_file, "... ", appendLF = FALSE)
-                a <- tryCatch(readr::write_rds(result, backup_file), error = function(e) a)
-                if (inherits(a, "error")) {
-                    message("\n   --->>> FAIL! <<<---\nCannot save intermediate result to file. Proceeding without backup.")
-                    backup_working <- FALSE
-                } else {
-                    message("Success.")
+                # attempt to save intermediate result to file
+                if (backup_working) {
+                    message("Saving intermediate result to ", backup_file, "... ", appendLF = FALSE)
+                    a <- tryCatch(readr::write_rds(result, backup_file), error = function(e) a)
+                    if (inherits(a, "error")) {
+                        message("\n   --->>> FAIL! <<<---\nCannot save intermediate result to file. Proceeding without backup.")
+                        backup_working <- FALSE
+                    } else {
+                        message("Success.")
+                    }
                 }
-            }
 
-            # is the daily or hourly limit reached? Wait accordingly
-            if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0L) {
-                message("Waiting a day to proceed. Continue download at ", Sys.time() + 60L*60L*24L, "...")
-                Sys.sleep(60L*60L*24L)
+                # is the daily or hourly limit reached? Wait accordingly
+                if ((dplyr::pull(result[[i]]$api_info, .data$remaining_calls_today))[1] == 0L) {
+                    message("Waiting a day to proceed. Continue download at ", Sys.time() + 60L*60L*24L, "...")
+                    Sys.sleep(60L*60L*24L)
+                } else {
+                    message("Waiting an hour to proceed. Continue download at ", Sys.time() + 60L*60L, "...")
+                    Sys.sleep(60L*60L)
+                }
+
+                # attempt to restore intermediate result from file
+                if (backup_working) {
+                    message("Loading intermediate result from ", backup_file, "... ", appendLF = FALSE)
+                    a <- tryCatch(readr::read_rds(backup_file), error = function(e) e)
+                    if (inherits(a, "error")) {
+                        message("\n   --->>> FAIL! <<<---\nCannot load intermediate result from file. Proceeding without backup.")
+                        backup_working <- FALSE
+                    } else {
+                        message("Success.")
+                        result <- a
+                    }
+                }
+
             } else {
-                message("Waiting an hour to proceed. Continue download at ", Sys.time() + 60L*60L, "...")
-                Sys.sleep(60L*60L)
-            }
 
-            # attempt to restore intermediate result from file
-            if (backup_working) {
-
-                message("Loading intermediate result from ", backup_file, "... ", appendLF = FALSE)
-                a <- tryCatch(readr::read_rds(backup_file), error = function(e) e)
-                if (inherits(a, "error")) {
-                    message("\n   --->>> FAIL! <<<---\nCannot load intermediate result from file. Proceeding without backup.")
-                    backup_working <- FALSE
-                } else {
-                    message("Success.")
-                    result <- a
-                }
+                # no rate limit reached
+                break
 
             }
-
-            # decrementing iterator in order to repeat the last query that failed due to the rate limit
-            i <- i - 1L
 
         }
 
