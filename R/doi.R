@@ -29,7 +29,12 @@ doi_set_regex <- function(rg_expr = "10\\.\\d{4,9}/[-._;()/:a-z0-9A-Z]+") {
   if (!is.character(rg_expr)) stop("Argument rg_expr must be of type character.")
   if (length(rg_expr) == 0)   stop("Argument rg_expr must not be of length 0.")
   if (length(rg_expr) > 1)    warning("Length of argument rg_expr greater than 1. Only first element used.")
+  if (is.na(rg_expr[1])) {
+      warning("Attempt to assing NA as regular expression rejected. Regular expression to find DOIs unchanged.")
+      invisible(NULL)
+  }
   pkg.env$doi_regex <- rg_expr[1]
+  invisible(rg_expr[1])
 
 }
 
