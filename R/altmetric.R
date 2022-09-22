@@ -65,10 +65,15 @@ altmetric_response_to_tibble <- function(alt_list) {
   result_tibble <- tibble::as_tibble(alt_list[names_single_elememts])
   result_tibble <- dplyr::bind_cols(result_tibble, sublists_tibble)
 
-  # refinement, needed due to inconsistency of Altmetric API responses
-  dplyr::mutate(result_tibble, last_updated = ifelse(is.character(.data$last_updated),
-                                                     readr::parse_integer(.data$last_updated),
-                                                     .data$last_updated))
+  # columns containing dates are of type integer - cast to type date
+  if ("last_updated" %in% names(result_tibble)) result_tibble <- dplyr::mutate(result_tibble,
+      last_updated = as.Date(as.POSIXct(as.integer(.data$last_updated), origin = "1970-01-01")))
+  if ("added_on" %in% names(result_tibble))     result_tibble <- dplyr::mutate(result_tibble,
+      added_on     = as.Date(as.POSIXct(as.integer(.data$added_on),     origin = "1970-01-01")))
+  if ("published_on" %in% names(result_tibble)) result_tibble <- dplyr::mutate(result_tibble,
+      published_on = as.Date(as.POSIXct(as.integer(.data$published_on), origin = "1970-01-01")))
+
+  return(result_tibble)
 
 }
 
@@ -217,8 +222,8 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
         metrics  <- tibble::tibble(doi = doi_vec[1])
         api_info <- tibble::tibble(api_response_msg          = altmetric_status_code_description(0L),
                                    api_response_code         = 0L,
-                                   remaining_calls_this_hour = NA,
-                                   remaining_calls_today     = NA
+                                   remaining_calls_this_hour = NA_integer_,
+                                   remaining_calls_today     = NA_integer_
                     )
         return(list(metrics = metrics, api_info = api_info))
     }
@@ -235,7 +240,7 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
         metrics  <- altmetric_response_to_tibble(metrics)
         metrics  <- dplyr::rename(metrics, altmetric_doi = .data$doi)
         metrics  <- dplyr::mutate(metrics, doi = doi_vec[1])
-        metrics  <- dplyr::select(metrics, .data$doi,dplyr::everything())
+        metrics  <- dplyr::select(metrics, .data$doi, dplyr::everything())
         api_info <- tibble::tibble(api_response_msg  = "Success")
     } else {
         metrics  <- tibble::tibble(doi = doi_vec[1])
@@ -246,8 +251,8 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
     api_info <- dplyr::mutate(
                     api_info,
                     api_response_code         = response$status_code,
-                    remaining_calls_this_hour = response$headers$`x-hourlyratelimit-remaining`,
-                    remaining_calls_today     = response$headers$`x-dailyratelimit-remaining`
+                    remaining_calls_this_hour = as.integer(response$headers$`x-hourlyratelimit-remaining`),
+                    remaining_calls_today     = as.integer(response$headers$`x-dailyratelimit-remaining`)
     )
 
     # return result
