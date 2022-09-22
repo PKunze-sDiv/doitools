@@ -6,25 +6,6 @@
 
 
 
-argument_validity_check <- function(doi_vec, api_key = NULL, wait_for = 1L) {
-
-    if (!is.character(doi_vec)) stop("Argument doi_vec must be a character vector.")
-    if (length(doi_vec) == 0)   stop("Argument doi_vec must not be of length 0.")
-    if (!is.null(api_key) &&
-        !is.character(api_key)) stop("Argument api_key must be NULL or a character vector.")
-    if (!is.null(api_key) &&
-        length(api_key) == 0)   stop("Argument api_key must be either NULL or of length greater than 0.")
-    if (!is.null(api_key) &&
-        length(api_key) > 1)    warning("Length of argument api_key greater than 1. Only first element used.")
-    if (!is.numeric(wait_for))  stop("Argument wait_for must be numeric.")
-    if (length(wait_for) == 0)  stop("Argument wait_for must not be of length 0.")
-    if (length(wait_for) > 1)   warning("Length of argument wait_for greater than 1. Only first element used.")
-
-}
-
-
-
-
 # Prints a message indicating the remaining calls before the rate limit is reached
 msg_limit_remainder <- function(api_info) {
 
@@ -94,6 +75,25 @@ altmetric_response_to_tibble <- function(alt_list) {
 
 
 
+doi_get_altmetrics_argument_validity_check <- function(doi_vec, api_key = NULL, wait_for = 1L) {
+
+  if (!is.character(doi_vec)) stop("Argument doi_vec must be a character vector.")
+  if (length(doi_vec) == 0)   stop("Argument doi_vec must not be of length 0.")
+  if (!is.null(api_key) &&
+      !is.character(api_key)) stop("Argument api_key must be NULL or a character vector.")
+  if (!is.null(api_key) &&
+      length(api_key) == 0)   stop("Argument api_key must be either NULL or of length greater than 0.")
+  if (!is.null(api_key) &&
+      length(api_key) > 1)    warning("Length of argument api_key greater than 1. Only first element used.")
+  if (!is.numeric(wait_for))  stop("Argument wait_for must be numeric.")
+  if (length(wait_for) == 0)  stop("Argument wait_for must not be of length 0.")
+  if (length(wait_for) > 1)   warning("Length of argument wait_for greater than 1. Only first element used.")
+
+}
+
+
+
+
 #' Fetch publication data from the Altmetric API
 #'
 #' @description The Altmetric API provides a set of publication meta data including attention scores in social networks
@@ -144,7 +144,7 @@ altmetric_response_to_tibble <- function(alt_list) {
 doi_get_altmetrics <- function(doi_vec, api_key = NULL, wait_for = 1L) {
 
     # check validity of function arguments
-    argument_validity_check(doi_vec, api_key, wait_for)
+    doi_get_altmetrics_argument_validity_check(doi_vec, api_key, wait_for)
 
     # initialize progress bar
     pb     <- utils::txtProgressBar(min = 0, max = length(doi_vec), style = 3)
@@ -211,7 +211,7 @@ doi_get_altmetrics <- function(doi_vec, api_key = NULL, wait_for = 1L) {
 doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
 
     # check validity of function arguments
-    argument_validity_check(doi_vec, api_key)
+    doi_get_altmetrics_argument_validity_check(doi_vec, api_key)
     if (is.na(doi_vec[1])) {
         warning("NA in argument doi_vec. This results in a row of NAs. Better filter NAs bevor calling doi_get_altmetrics.")
         metrics  <- tibble::tibble(doi = doi_vec[1])
@@ -227,6 +227,7 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
     ApiUrl   <- "https://api.altmetric.com/v1/doi/"
     url      <- stringr::str_c(ApiUrl, doi_vec[1], ifelse(is.null(api_key[1]), "", stringr::str_c("?key=", api_key[1])))
     response <- httr::GET(url)
+    response$status_code <- as.integer(response$status_code)
 
     # is the response a success or not? build metrics tibble and api_info tibble accordingly
     if (response$status_code == 200L) {
@@ -257,16 +258,12 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
 
 
 
-
-
-
-
 #' @rdname doi_get_altmetrics
 #' @export
 doi_get_altmetrics_background <- function(doi_vec, api_key = NULL) {
 
     # check validity of function arguments
-    argument_validity_check(doi_vec, api_key)
+    doi_get_altmetrics_argument_validity_check(doi_vec, api_key)
 
     # initialize return value
     result         <- list(list(metrics = tibble::tibble(), api_info = tibble::tibble()))
