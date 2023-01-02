@@ -129,8 +129,8 @@ doi_get_altmetrics_argument_validity_check <- function(doi_vec, api_key = NULL, 
 #' \itemize{
 #'   \item `api_response_code` The response code of the API
 #'   \item `api_response_msg` The description of the response code, which can either be an error message or the word 'Success'
-#'   \item `remaining_calls_this_hour` The number of remaining API calls beeing until the hourly rate limit is reached
-#'   \item `remaining_calls_today` The number of remaining API calls beeing until the daily rate limit is reached
+#'   \item `remaining_calls_this_hour` The number of remaining API calls until the hourly rate limit is reached
+#'   \item `remaining_calls_today` The number of remaining API calls until the daily rate limit is reached
 #' }
 #' @examples my_dois <- c("10.7191/jeslib.2021.1180", "10.1108/02640470610689151", ",,,not,a,doi,,,")
 #'
@@ -217,6 +217,7 @@ doi_get_altmetrics_single <- function(doi_vec, api_key = NULL) {
 
     # check validity of function arguments
     doi_get_altmetrics_argument_validity_check(doi_vec, api_key)
+    if (length(doi_vec) > 1) warning("Length of argument doi_vec greater than 1. Only first element used.")
     if (is.na(doi_vec[1])) {
         warning("NA in argument doi_vec. This results in a row of NAs. Better filter NAs bevor calling doi_get_altmetrics.")
         metrics  <- tibble::tibble(doi = doi_vec[1])
