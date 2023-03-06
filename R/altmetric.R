@@ -72,6 +72,10 @@ altmetric_response_to_tibble <- function(alt_list) {
       added_on     = as.Date(as.POSIXct(as.integer(.data$added_on),     origin = "1970-01-01")))
   if ("published_on" %in% names(result_tibble)) result_tibble <- dplyr::mutate(result_tibble,
       published_on = as.Date(as.POSIXct(as.integer(.data$published_on), origin = "1970-01-01")))
+  if ("pubdate" %in% names(result_tibble)) result_tibble <- dplyr::mutate(result_tibble,
+      pubdate = as.Date(as.POSIXct(as.integer(.data$pubdate), origin = "1970-01-01")))
+  if ("epubdate" %in% names(result_tibble)) result_tibble <- dplyr::mutate(result_tibble,
+      epubdate = as.Date(as.POSIXct(as.integer(.data$epubdate), origin = "1970-01-01")))
 
   return(result_tibble)
 
