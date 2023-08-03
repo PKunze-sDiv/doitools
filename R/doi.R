@@ -18,7 +18,7 @@ pkg.env$doi_regex <- "10\\.\\d{4,9}/[-._;()/:a-z0-9A-Z]+"
 #' Set the regular expression used to find a DOI
 #'
 #' The doi package uses a regular expression to find or extract DOIs.
-#' Its standard value is "10\\\\.\\\\d{4,9}/\[-._;()/:a-z0-9A-Z\]+".
+#' Its standard value is "10\\\\.\\\\d\{4,9\}/\[-._;()/:a-z0-9A-Z\]+".
 #' Use this function to set a custom regular expression of your choice, valid for the current session.
 #' Omit the argument to set the regular expression back to standard.
 #'
